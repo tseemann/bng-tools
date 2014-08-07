@@ -9,7 +9,7 @@ use List::Util qw(min max);
 use List::MoreUtils qw(uniq);
 use SVG;
 
-my(@Options, $verbose, $tab_fn, $tree_fn, $aln_fn, $svg_fn,
+my(@Options, $verbose, $tab_fn, $tree_fn, $aln_fn, $svg_fn, $order_fn,
              $width, $height, $consensus, $border, $monochrome);
 setOptions();
 
@@ -64,7 +64,24 @@ for my $n (uniq sort values %group_of) {
   print STDERR "Group $n = $colour_of{$n}\n";
 }
 
-my @taxa = sort keys %box; # sort by --tree eventually...
+my @taxa = sort keys %box; # default order is alphabetical
+if ($order_fn) {
+  my $order_fh = get_fh($order_fn, 'taxa/row ordering (--order)');
+  @taxa = <$order_fh>; # real all rows
+  chomp @taxa;
+  printf STDERR "Read %d taxa from $order_fn\n", scalar(@taxa);
+  if (@taxa != scalar keys %box) {
+    print STDERR "ERROR: differing number of taxa/rows between '$order_fn' and '$tab_fn'\n";
+    exit -1;
+  }
+  for my $t (@taxa) {
+    if (not exists $box{$t}) {
+      print STDERR "ERROR: unknown id/taxa '$t' in $order_fn\n";
+      exit -1;;
+    }
+  }
+}
+
 my $ntaxa = scalar @taxa;
 print STDERR "Number of taxa: $ntaxa\n";
 
@@ -171,7 +188,8 @@ sub setOptions {
     {OPT=>"height=i",  VAR=>\$height, DEFAULT=>600, DESC=>"Canvas height"},
 #    {OPT=>"minblock=i",  VAR=>\$minblock, DEFAULT=>0, DESC=>"Boxes must be at least this wide"},
     {OPT=>"consensus!",  VAR=>\$consensus, DEFAULT=>0, DESC=>"Add consensus row"},
-#    {OPT=>"border!",  VAR=>\$border, DEFAULT=>0, DESC=>"Add border to delimit genome"},
+    {OPT=>"border!",  VAR=>\$border, DEFAULT=>0, DESC=>"Add border to delimit genome"},
+    {OPT=>"ordering=s",  VAR=>\$order_fn, DEFAULT=>'', DESC=>"Order rows according to IDs in this file"},
 #    {OPT=>"tickmarks!",  VAR=>\$tickmarks, DEFAULT=>0, DESC=>"Add genome position tick markers"},
     {OPT=>"monochrome!",  VAR=>\$monochrome, DEFAULT=>0, DESC=>"Don't colour groups"},
   );
