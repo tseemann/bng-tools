@@ -12,7 +12,7 @@ use SVG;
 use constant FONT_HEIGHT_PROP => 0.8;
 use constant LABEL_WIDTH => 200;
 
-my(@Options, $verbose, $tab_fn, $tree_fn, $aln_fn, $svg_fn, $order_fn,
+my(@Options, $verbose, $tab_fn, $tree_fn, $aln_fn, $svg_fn, $order_fn, $colour_fn,
              $width, $height, $consensus, $border, $monochrome);
 setOptions();
 
@@ -59,12 +59,13 @@ while (<$tab_fh>) {
 }
 print STDERR "Need to draw $boxes boxes.\n";
 
+my $colour_fh = $colour_fn ? get_fh($colour_fn, 'Colour names') : \*DATA;
 print STDERR "Choosing colours...\n";
 for my $n (uniq sort values %group_of) {
-  my $colour = <DATA>;
+  my $colour = <$colour_fh>;
   chomp $colour;
   $colour_of{$n} = $monochrome ? 'grey' : $colour;
-  print STDERR "Group $n = $colour_of{$n}\n";
+  print STDERR "Group $n colour: $colour_of{$n}\n";
 }
 
 my @taxa = sort keys %box; # default order is alphabetical
@@ -138,6 +139,14 @@ for my $t (@taxa) {
   $row++;
 }
 
+if ($border) {
+  print STDERR "Adding border to define genome extents.\n";
+  $svg->rectangle(
+    x => 0, y => 0, width => $width, height => $height,
+    style => { stroke=>'gray', fill=>'none' },
+  );
+}
+
 print STDERR "Writing SVG file: $svg_fn\n";
 open my $svg_fh, '>', $svg_fn;
 print {$svg_fh} $svg->xmlify;
@@ -193,6 +202,7 @@ sub setOptions {
     {OPT=>"consensus!",  VAR=>\$consensus, DEFAULT=>0, DESC=>"Add consensus row"},
     {OPT=>"border!",  VAR=>\$border, DEFAULT=>0, DESC=>"Add border to delimit genome"},
     {OPT=>"ordering=s",  VAR=>\$order_fn, DEFAULT=>'', DESC=>"Order rows according to IDs in this file"},
+    {OPT=>"colours=s",  VAR=>\$colour_fn, DEFAULT=>'', DESC=>"File of colour names to use. See http://www.w3.org/TR/css3-color/#svg-color"},
 #    {OPT=>"tickmarks!",  VAR=>\$tickmarks, DEFAULT=>0, DESC=>"Add genome position tick markers"},
     {OPT=>"monochrome!",  VAR=>\$monochrome, DEFAULT=>0, DESC=>"Don't colour groups"},
   );
@@ -235,4 +245,3 @@ Lavendar
 LemonChiffon
 cyan
 pink
-
