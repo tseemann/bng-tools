@@ -10,7 +10,6 @@ use List::MoreUtils qw(uniq);
 use SVG;
 
 use constant FONT_HEIGHT_PROP => 0.8;
-use constant LABEL_WIDTH => 200;
 
 my(@Options, $verbose, $tab_fn, $tree_fn, $aln_fn, $svg_fn, $order_fn, $colour_fn,
              $width, $height, $consensus, $border, $monochrome);
@@ -89,8 +88,18 @@ if ($order_fn) {
 my $ntaxa = scalar @taxa;
 print STDERR "Number of taxa: $ntaxa\n";
 
-my $svg = SVG->new(width=>$width + LABEL_WIDTH, height=>$height);
+my $longest_id = max( map { length } @taxa );
+print STDERR "Longest taxa name is $longest_id characters long.\n";
+
 my $row_height = int($height / @taxa);
+
+# the font 'size' is F_H_P * row_height, so how *wide* does it need to be?
+# this is hard to do in SVG without JS, so I use a 0.5 fudge factor (~ H:W ratio of font)
+my $label_width = $longest_id * FONT_HEIGHT_PROP * $row_height * 0.5;
+print STDERR "Set label width to $label_width (genome width is $width)\n";
+
+my $svg = SVG->new(width=>$width + $label_width, height=>$height);
+
 my $row = 0;
 if ($consensus) {
   label($svg, 0, 'Consensus', 'black');
