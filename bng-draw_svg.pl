@@ -9,6 +9,9 @@ use List::Util qw(min max);
 use List::MoreUtils qw(uniq);
 use SVG;
 
+use constant FONT_HEIGHT_PROP => 0.8;
+use constant LABEL_WIDTH => 200;
+
 my(@Options, $verbose, $tab_fn, $tree_fn, $aln_fn, $svg_fn, $order_fn,
              $width, $height, $consensus, $border, $monochrome);
 setOptions();
@@ -85,7 +88,7 @@ if ($order_fn) {
 my $ntaxa = scalar @taxa;
 print STDERR "Number of taxa: $ntaxa\n";
 
-my $svg = SVG->new(width=>$width+200, height=>$height);
+my $svg = SVG->new(width=>$width + LABEL_WIDTH, height=>$height);
 my $row_height = int($height / @taxa);
 my $row = 0;
 if ($consensus) {
@@ -148,10 +151,10 @@ sub label {
   my($svg, $Y, $text, $colour) = @_;
   $svg->text(
     x=>$width+1, 
-    y=>$Y + $row_height*0.8, 
+    y=>$Y + $row_height * FONT_HEIGHT_PROP, 
     style=>{ 
       'font'=>'sans', 
-      'font-size'=>int(0.8*$row_height),
+      'font-size'=>int(FONT_HEIGHT_PROP * $row_height),
       'font-style'=>'italic',
       'fill'=> $colour,
     },
